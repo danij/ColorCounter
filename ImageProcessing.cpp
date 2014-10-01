@@ -1,5 +1,7 @@
 #include "ImageProcessing.h"
 
+//http://stackoverflow.com/questions/3018313/algorithm-to-convert-rgb-to-hsv-and-hsv-to-rgb-in-range-0-255-for-both
+
 void HsvToRgb(short h, unsigned char s, unsigned char v,
     unsigned char& r, unsigned char& g, unsigned char& b)
 {
