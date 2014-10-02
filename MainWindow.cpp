@@ -125,8 +125,9 @@ void MainWindow::DrawHistogram(const Histogram& histogram)
     wxMemoryDC dc;
 
     dc.SelectObject(bitmap);
+    dc.SetBackground(wxBrush(histogramPanel->GetBackgroundColour()));
     dc.Clear();
-    
+
     auto maxValue = histogram.MaxValue();
     for (auto& pair : histogram)
     {

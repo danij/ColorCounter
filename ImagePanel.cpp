@@ -6,6 +6,7 @@ ImagePanel::ImagePanel(wxWindow *parent, wxWindowID winid, const wxPoint& pod,
 {
     bitmap = wxBitmap(size.GetWidth(), size.GetHeight(), 24);
     memoryDC.SelectObject(bitmap);
+    memoryDC.SetBackground(wxBrush(GetBackgroundColour()));
     memoryDC.Clear();
 
     Bind(wxEVT_PAINT, &ImagePanel::OnPaint, this);
