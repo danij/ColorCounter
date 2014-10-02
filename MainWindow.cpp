@@ -135,7 +135,7 @@ void MainWindow::DrawHistogram(const Histogram& histogram)
         auto value = pair.second;
         unsigned char r, g, b;
         
-        HsvToRgb(hue, 255, 192, r, g, b);
+        HsvToRgb(hue, displaySaturation, displayValue, r, g, b);
         dc.SetPen(wxPen(wxColour(r, g, b)));
 
         dc.DrawLine(wxPoint(hue, height - 1), wxPoint(hue, height - value * height / maxValue - 1));
@@ -180,7 +180,7 @@ void MainWindow::DisplaySampleValues(const Histogram& histogram)
 
         auto hue = pair.first;
         unsigned char r, g, b;
-        HsvToRgb(hue, 255, 224, r, g, b);
+        HsvToRgb(hue, displaySaturation, displayValue, r, g, b);
 
         items.push_back(ColorPercent(wxColour(r, g, b), percent));
 

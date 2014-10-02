@@ -18,6 +18,8 @@ protected:
     ImagePanel* histogramPanel;
     ColorListBox* resultListBox;
     HueProcessor hueProcessor;
+    const int displaySaturation = 255;
+    const int displayValue = 224;
 
     void Initialize();
     void ProcessFile(const wxString& fileName);
