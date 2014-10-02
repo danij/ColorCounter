@@ -42,3 +42,11 @@ set(HEADER_FILES
 
 add_executable(ColorCounter ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(ColorCounter ${wxWidgets_LIBRARIES})
+
+if(WIN32)
+    if(MSVC)
+        set_target_properties(ColorCounter PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+    elseif(CMAKE_COMPILER_IS_GNUCXX)
+        set_target_properties(ColorCounter PROPERTIES LINK_FLAGS "--subsystem,windows")        
+    endif()
+endif()
