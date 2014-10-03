@@ -18,7 +18,9 @@ protected:
     ImagePanel* histogramPanel;
     ImagePanel* pieHistogramPanel;
     ColorListBox* resultListBox;
+    wxCheckBox* logValuesCheckBox;
     HueProcessor hueProcessor;
+    wxBitmap* histograms[4];
     const int displaySaturation = 255;
     const int displayValue = 224;
 
@@ -27,9 +29,11 @@ protected:
     void DrawHistogram(const Histogram& histogram);
     void RefreshSampleValues();
     void DisplaySampleValues(const Histogram& histogram);
+    void RefreshHistogramsDisplay();
     void OnShow(wxShowEvent& event);
     void OnSelectImageClick(wxCommandEvent& event);
     void OnSampleRangeChange(wxCommandEvent& event);
+    void OnLogValuesCheckBoxClick(wxCommandEvent& event);
 };
 
 #endif

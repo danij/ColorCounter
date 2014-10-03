@@ -17,18 +17,22 @@ using namespace std;
 #endif
 
 MainWindow::MainWindow()
-    : wxFrame(NULL, wxID_ANY, wxT("Color Counter"), wxDefaultPosition, wxSize(800, 600))
+    : wxFrame(NULL, wxID_ANY, wxT("Color Counter"), wxDefaultPosition, wxSize(800, 650))
 {
     Initialize();
 }
 
 MainWindow::~MainWindow()
 {
+    for (auto& item : histograms)
+    {
+        delete item;
+    }
 }
 
 void MainWindow::Initialize()
 {
-    SetMinClientSize(wxSize(600, 600));
+    SetMinClientSize(wxSize(800, 650));
 
     auto mainPanel = new wxPanel(this);
 
@@ -36,9 +40,11 @@ void MainWindow::Initialize()
     auto valuesLabel = new wxStaticText(settingsSizer->GetStaticBox(), wxID_ANY, wxT("Average results every (hue degrees):"));
     sampleRangesComboBox = new wxComboBox(settingsSizer->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition,
         wxDefaultSize, 0, 0, wxCB_READONLY);
+    logValuesCheckBox = new wxCheckBox(settingsSizer->GetStaticBox(), wxID_ANY, wxT("Logarithmic"));
     auto selectImageButton = new wxButton(settingsSizer->GetStaticBox(), wxID_ANY, wxT("&Select Image"));
     settingsSizer->Add(valuesLabel, wxSizerFlags(0).Center().Border(wxLEFT | wxRIGHT, 5));
     settingsSizer->Add(sampleRangesComboBox, wxSizerFlags(1).Center().Border(wxLEFT | wxRIGHT, 5));
+    settingsSizer->Add(logValuesCheckBox, wxSizerFlags(0).Center().Border(wxLEFT | wxRIGHT, 5));
     settingsSizer->Add(selectImageButton, wxSizerFlags(0).Center().Border(wxLEFT, 5));
 
     auto resultSizer = new wxStaticBoxSizer(wxHORIZONTAL, mainPanel, wxT("Results"));
@@ -48,7 +54,7 @@ void MainWindow::Initialize()
     auto histogramSplitterLine = new wxStaticLine(histogramParentPanel, wxID_ANY);
     histogramPanel = new ImagePanel(histogramParentPanel, wxID_ANY, wxDefaultPosition, wxSize(360, 200));
     pieHistogramPanel = new ImagePanel(histogramParentPanel, wxID_ANY, wxDefaultPosition, wxSize(360, 300));
-    histogramSizer->Add(histogramPanel, wxSizerFlags(0).Border(wxTOP | wxBOTTOM, 5));
+    histogramSizer->Add(histogramPanel, wxSizerFlags(0).Border(wxTOP, 5));
     histogramSizer->Add(histogramSplitterLine, wxSizerFlags(0).Expand().Border(wxTOP | wxBOTTOM, 5));
     histogramSizer->Add(pieHistogramPanel, wxSizerFlags(0).Border(wxBOTTOM, 5));
     histogramParentPanel->SetSizer(histogramSizer);
@@ -64,9 +70,16 @@ void MainWindow::Initialize()
 
     selectImageButton->SetFocus();
 
+    for (int i = 0; i < 2; i++)
+    {
+        histograms[i] = new wxBitmap(histogramPanel->GetSize().GetX(), histogramPanel->GetSize().GetY(), 24);
+        histograms[i + 2] = new wxBitmap(pieHistogramPanel->GetSize().GetX(), pieHistogramPanel->GetSize().GetY(), 24);
+    }
+
     Bind(wxEVT_SHOW, &MainWindow::OnShow, this);
     Bind(wxEVT_COMMAND_BUTTON_CLICKED, &MainWindow::OnSelectImageClick, this, selectImageButton->GetId());
     Bind(wxEVT_COMMAND_COMBOBOX_SELECTED, &MainWindow::OnSampleRangeChange, this, sampleRangesComboBox->GetId());
+    Bind(wxEVT_CHECKBOX, &MainWindow::OnLogValuesCheckBoxClick, this, logValuesCheckBox->GetId());
 }
 
 void MainWindow::OnShow(wxShowEvent& event)
@@ -138,25 +151,33 @@ void MainWindow::ProcessFile(const wxString& fileName)
 
 void MainWindow::DrawHistogram(const Histogram& histogram)
 {
-    auto height = histogramPanel->GetSize().GetY();
-    wxBitmap bitmap(360, height, 24);
-    wxBitmap pieBitmap(pieHistogramPanel->GetSize().GetX(), pieHistogramPanel->GetSize().GetY(), 24);
-    wxMemoryDC dc;
-    wxMemoryDC pieDC;
+    wxBitmap& bitmap = *histograms[0];
+    wxBitmap& logBitmap = *histograms[1];
+    wxBitmap& pieBitmap = *histograms[2];
+    wxBitmap& pieLogBitmap = *histograms[3];
 
-    dc.SelectObject(bitmap);
-    dc.SetBackground(wxBrush(histogramPanel->GetBackgroundColour()));
-    dc.Clear();
+    auto bitmapHeight = bitmap.GetHeight();
 
-    pieDC.SelectObject(pieBitmap);
-    pieDC.SetBackground(wxBrush(pieHistogramPanel->GetBackgroundColour()));
-    pieDC.Clear();
+    wxMemoryDC dcs[4];
+    wxMemoryDC& linearDC = dcs[0];
+    wxMemoryDC& linearDCLog = dcs[1];
+    wxMemoryDC& pieDC = dcs[2];
+    wxMemoryDC& pieDCLog = dcs[3];
+
+    for (int i = 0; i < 4; i++)
+    {
+        auto& dc = dcs[i];
+        dc.SelectObject(*histograms[i]);
+        dc.SetBackground(wxBrush(histogramPanel->GetBackgroundColour()));
+        dc.Clear();
+    }
 
     auto pieWidth = min(pieBitmap.GetWidth(), pieBitmap.GetHeight());
     auto pieCenter = wxPoint(pieBitmap.GetWidth() / 2, pieBitmap.GetHeight() / 2);
     auto pieRadius = pieWidth / 2;
 
     auto maxValue = histogram.MaxValue();
+    auto maxValueLog = log10(histogram.MaxValue());
     for (auto& pair : histogram)
     {
         auto hue = pair.first;
@@ -166,32 +187,45 @@ void MainWindow::DrawHistogram(const Histogram& histogram)
         HsvToRgb(hue, displaySaturation, displayValue, r, g, b);
         auto pen = wxPen(wxColour(r, g, b));
 
-        dc.SetPen(pen);
-        dc.DrawLine(wxPoint(hue, height - 1), wxPoint(hue, height - value * height / maxValue - 1));
+        for (auto& dc : dcs)
+        {
+            dc.SetPen(pen);
+        }
 
-        pieDC.SetPen(pen);
-
+        linearDC.DrawLine(wxPoint(hue, bitmapHeight - 1), 
+            wxPoint(hue, bitmapHeight - value * bitmapHeight / maxValue - 1));
+        linearDCLog.DrawLine(wxPoint(hue, bitmapHeight - 1),
+            wxPoint(hue, bitmapHeight - log10(value) * bitmapHeight / maxValueLog - 1));
+        
         auto angle = DEG2RAD(hue);
         auto nextAngle = DEG2RAD((hue + 1) % 360);
-        auto circleRadius = pieRadius / 4;
+        auto circleRadius = pieRadius / 8;
         auto radius = circleRadius + (pieRadius - circleRadius) * value / maxValue;
+        auto radiusLog = circleRadius + (pieRadius - circleRadius) * log10(value) / maxValueLog;
 
         for (auto a = angle; a <= nextAngle; a += 0.0001)
         {
             auto pieOuter = wxPoint(pieCenter.x + cos(a) * radius, pieCenter.y - sin(a) * radius);
             pieDC.DrawLine(pieCenter, pieOuter);
+
+            auto pieOuterLog = wxPoint(pieCenter.x + cos(a) * radiusLog, pieCenter.y - sin(a) * radiusLog);
+            pieDCLog.DrawLine(pieCenter, pieOuterLog);
         }
 
-        pieDC.SetPen(pieDC.GetBackground().GetColour());
-        pieDC.SetBrush(pieDC.GetBackground().GetColour());
-        pieDC.DrawCircle(pieCenter, circleRadius);
+        for (auto dc : { &pieDC, &pieDCLog })
+        {
+            dc->SetPen(pieDC.GetBackground().GetColour());
+            dc->SetBrush(pieDC.GetBackground().GetColour());
+            dc->DrawCircle(pieCenter, circleRadius);
+        }
     }
     
-    dc.SelectObject(wxNullBitmap);
-    pieDC.SelectObject(wxNullBitmap);
+    for (auto& dc : dcs)
+    {
+        dc.SelectObject(wxNullBitmap);
+    }
 
-    histogramPanel->SetBitmap(bitmap);
-    pieHistogramPanel->SetBitmap(pieBitmap);
+    RefreshHistogramsDisplay();
 }
 
 void MainWindow::RefreshSampleValues()
@@ -234,4 +268,21 @@ void MainWindow::DisplaySampleValues(const Histogram& histogram)
 
         resultListBox->SetItems(items);
     }
+}
+
+void MainWindow::RefreshHistogramsDisplay()
+{
+    int indexShift = logValuesCheckBox->IsChecked() ? 1 : 0;
+
+    histogramPanel->SetBitmap(*histograms[0 + indexShift]);
+    pieHistogramPanel->SetBitmap(*histograms[2 + indexShift]);
+}
+
+void MainWindow::OnLogValuesCheckBoxClick(wxCommandEvent& event)
+{
+    if (resultListBox->GetItemCount() < 1)
+    {
+        return;
+    }
+    RefreshHistogramsDisplay();
 }
