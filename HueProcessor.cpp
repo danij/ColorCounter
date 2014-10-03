@@ -32,7 +32,7 @@ void HueProcessor::ProcessRGB(unsigned char r, unsigned char g, unsigned char b)
     
     RgbToHsv(r, g, b, h, s, v);
 
-    if (s < 10)
+    if (s < 10 || (r < 2 && g < 2 && b < 2))
     {
         //inconclusive hue
         return;
