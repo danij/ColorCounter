@@ -134,14 +134,12 @@ void MainWindow::ProcessFile(const wxString& fileName)
     }
 
     hueProcessor.Clear();
-    wxImagePixelData pixelData(image);
-    wxImagePixelData::Iterator it(pixelData);
 
-    for (int y = 0; y < image.GetHeight(); y++)
+    for (int y = 0; y < image.GetHeight(); ++y)
     {
-        for (int x = 0; x < image.GetWidth(); x++, ++it)
+        for (int x = 0; x < image.GetWidth(); ++x)
         {
-            hueProcessor.ProcessRGB(it.Red(), it.Green(), it.Blue());
+            hueProcessor.ProcessRGB(image.GetRed(x, y), image.GetGreen(x, y), image.GetBlue(x, y));
         }
     }
     
