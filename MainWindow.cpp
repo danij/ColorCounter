@@ -2,6 +2,7 @@
 #include <wx/rawbmp.h>
 #include <wx/statline.h>
 #include <wx/graphics.h>
+#include <wx/arrstr.h>
 #include <vector>
 #include <algorithm>
 #include <cmath>
