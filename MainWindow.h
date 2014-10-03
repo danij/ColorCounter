@@ -16,6 +16,7 @@ public:
 protected:
     wxComboBox* sampleRangesComboBox;
     ImagePanel* histogramPanel;
+    ImagePanel* pieHistogramPanel;
     ColorListBox* resultListBox;
     HueProcessor hueProcessor;
     const int displaySaturation = 255;

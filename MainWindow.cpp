@@ -1,12 +1,20 @@
 ﻿#include <wx/sizer.h>
 #include <wx/rawbmp.h>
+#include <wx/statline.h>
+#include <wx/graphics.h>
 #include <vector>
+#include <algorithm>
+#include <cmath>
 #include "MainWindow.h"
 #include "HueProcessor.h"
 #include "ImageProcessing.h"
 #include "ColorPercent.h"
 
 using namespace std;
+
+#ifndef DEG2RAD
+#define DEG2RAD(deg) ((float)(deg) * M_PI / 180)
+#endif
 
 MainWindow::MainWindow()
     : wxFrame(NULL, wxID_ANY, wxT("Color Counter"), wxDefaultPosition, wxSize(800, 600))
@@ -20,7 +28,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::Initialize()
 {
-    SetMinClientSize(wxSize(600, 550));
+    SetMinClientSize(wxSize(600, 600));
 
     auto mainPanel = new wxPanel(this);
 
@@ -34,9 +42,19 @@ void MainWindow::Initialize()
     settingsSizer->Add(selectImageButton, wxSizerFlags(0).Center().Border(wxLEFT, 5));
 
     auto resultSizer = new wxStaticBoxSizer(wxHORIZONTAL, mainPanel, wxT("Results"));
-    histogramPanel = new ImagePanel(resultSizer->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxSize(360, 360));
+    
+    auto histogramParentPanel = new wxPanel(resultSizer->GetStaticBox(), wxID_ANY);
+    auto histogramSizer = new wxBoxSizer(wxVERTICAL);
+    auto histogramSplitterLine = new wxStaticLine(histogramParentPanel, wxID_ANY);
+    histogramPanel = new ImagePanel(histogramParentPanel, wxID_ANY, wxDefaultPosition, wxSize(360, 200));
+    pieHistogramPanel = new ImagePanel(histogramParentPanel, wxID_ANY, wxDefaultPosition, wxSize(360, 300));
+    histogramSizer->Add(histogramPanel, wxSizerFlags(0).Border(wxTOP | wxBOTTOM, 5));
+    histogramSizer->Add(histogramSplitterLine, wxSizerFlags(0).Expand().Border(wxTOP | wxBOTTOM, 5));
+    histogramSizer->Add(pieHistogramPanel, wxSizerFlags(0).Border(wxBOTTOM, 5));
+    histogramParentPanel->SetSizer(histogramSizer);
+
     resultListBox = new ColorListBox(resultSizer->GetStaticBox(), wxID_ANY);
-    resultSizer->Add(histogramPanel, wxSizerFlags(0).Border(wxLEFT | wxRIGHT, 5));
+    resultSizer->Add(histogramParentPanel, wxSizerFlags(0).Border(wxLEFT | wxRIGHT, 5));
     resultSizer->Add(resultListBox, wxSizerFlags(1).Expand().Border(wxLEFT, 5));
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -122,11 +140,21 @@ void MainWindow::DrawHistogram(const Histogram& histogram)
 {
     auto height = histogramPanel->GetSize().GetY();
     wxBitmap bitmap(360, height, 24);
+    wxBitmap pieBitmap(pieHistogramPanel->GetSize().GetX(), pieHistogramPanel->GetSize().GetY(), 24);
     wxMemoryDC dc;
+    wxMemoryDC pieDC;
 
     dc.SelectObject(bitmap);
     dc.SetBackground(wxBrush(histogramPanel->GetBackgroundColour()));
     dc.Clear();
+
+    pieDC.SelectObject(pieBitmap);
+    pieDC.SetBackground(wxBrush(pieHistogramPanel->GetBackgroundColour()));
+    pieDC.Clear();
+
+    auto pieWidth = min(pieBitmap.GetWidth(), pieBitmap.GetHeight());
+    auto pieCenter = wxPoint(pieBitmap.GetWidth() / 2, pieBitmap.GetHeight() / 2);
+    auto pieRadius = pieWidth / 2;
 
     auto maxValue = histogram.MaxValue();
     for (auto& pair : histogram)
@@ -136,14 +164,34 @@ void MainWindow::DrawHistogram(const Histogram& histogram)
         unsigned char r, g, b;
         
         HsvToRgb(hue, displaySaturation, displayValue, r, g, b);
-        dc.SetPen(wxPen(wxColour(r, g, b)));
+        auto pen = wxPen(wxColour(r, g, b));
 
+        dc.SetPen(pen);
         dc.DrawLine(wxPoint(hue, height - 1), wxPoint(hue, height - value * height / maxValue - 1));
+
+        pieDC.SetPen(pen);
+
+        auto angle = DEG2RAD(hue);
+        auto nextAngle = DEG2RAD((hue + 1) % 360);
+        auto circleRadius = pieRadius / 4;
+        auto radius = circleRadius + (pieRadius - circleRadius) * value / maxValue;
+
+        for (auto a = angle; a <= nextAngle; a += 0.0001)
+        {
+            auto pieOuter = wxPoint(pieCenter.x + cos(a) * radius, pieCenter.y - sin(a) * radius);
+            pieDC.DrawLine(pieCenter, pieOuter);
+        }
+
+        pieDC.SetPen(pieDC.GetBackground().GetColour());
+        pieDC.SetBrush(pieDC.GetBackground().GetColour());
+        pieDC.DrawCircle(pieCenter, circleRadius);
     }
     
     dc.SelectObject(wxNullBitmap);
+    pieDC.SelectObject(wxNullBitmap);
 
     histogramPanel->SetBitmap(bitmap);
+    pieHistogramPanel->SetBitmap(pieBitmap);
 }
 
 void MainWindow::RefreshSampleValues()
