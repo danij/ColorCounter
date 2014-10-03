@@ -84,10 +84,10 @@ void MainWindow::Initialize()
 
 void MainWindow::OnShow(wxShowEvent& event)
 {
-    sampleRangesComboBox->AppendString(wxT("15"));
-    sampleRangesComboBox->AppendString(wxT("30"));
-    sampleRangesComboBox->AppendString(wxT("60"));
-    sampleRangesComboBox->AppendString(wxT("120"));
+    for (auto& i : { 15, 30, 60, 120 })
+    {
+        sampleRangesComboBox->AppendString(wxString::Format(wxT("%d"), i));
+    }
 
     sampleRangesComboBox->Select(2);
 }
