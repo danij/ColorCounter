@@ -21,24 +21,24 @@ include_directories(${wxWidgets_INCLUDE_DIRS})
 link_directories(${wxWidgets_LIBRARY_DIRS})
 
 set(SOURCE_FILES 
-    Main.cpp 
-    MainWindow.cpp
-    ImagePanel.cpp
-    ImageProcessing.cpp
-    Histogram.cpp
-    HueProcessor.cpp
-    ColorPercent.cpp
-    ColorListBox.cpp)
+    src/Main.cpp 
+    src/MainWindow.cpp
+    src/ImagePanel.cpp
+    src/ImageProcessing.cpp
+    src/Histogram.cpp
+    src/HueProcessor.cpp
+    src/ColorPercent.cpp
+    src/ColorListBox.cpp)
 
 set(HEADER_FILES 
-    Main.h 
-    MainWindow.h
-    ImagePanel.h
-    ImageProcessing.h
-    Histogram.h
-    HueProcessor.h
-    ColorPercent.h
-    ColorListBox.h)
+    src/Main.h 
+    src/MainWindow.h
+    src/ImagePanel.h
+    src/ImageProcessing.h
+    src/Histogram.h
+    src/HueProcessor.h
+    src/ColorPercent.h
+    src/ColorListBox.h)
 
 add_executable(ColorCounter ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(ColorCounter ${wxWidgets_LIBRARIES})
