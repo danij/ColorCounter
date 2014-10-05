@@ -22,6 +22,8 @@ protected:
     static const int logHistogramIndex = 1;
     static const int histogramLayoutTypes = 2; //normal and pie
     static const int histogramScaleTypes = 2; //linear and log
+    static const int histogramTransitionDuration = 500; //ms
+    static const int histogramTransitionFPS = 10;
 
     wxComboBox* sampleRangesComboBox;
     ImagePanel* histogramPanel;
@@ -30,6 +32,10 @@ protected:
     wxCheckBox* logValuesCheckBox;
     HueProcessor hueProcessor;
     wxBitmap* histogramBitmaps[histogramLayoutTypes * histogramScaleTypes];
+    wxBitmap* histogramTransitionFrames[histogramLayoutTypes][histogramTransitionFPS];
+    wxTimer* histogramTransitionTimer;
+    int histogramTransitionIndex;
+    int histogramTransitionDirection;
 
     void Initialize();
     void ProcessFile(const wxString& fileName);
@@ -41,6 +47,7 @@ protected:
     void OnSelectImageClick(wxCommandEvent& event);
     void OnSampleRangeChange(wxCommandEvent& event);
     void OnLogValuesCheckBoxClick(wxCommandEvent& event);
+    void OnHistogramTransitionTimer(wxTimerEvent& event);
 };
 
 #endif
