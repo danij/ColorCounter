@@ -25,7 +25,7 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
-    for (auto& item : histograms)
+    for (auto& item : histogramBitmaps)
     {
         delete item;
     }
@@ -73,8 +73,8 @@ void MainWindow::Initialize()
 
     for (int i = 0; i < 2; i++)
     {
-        histograms[i] = new wxBitmap(histogramPanel->GetSize().GetX(), histogramPanel->GetSize().GetY(), 24);
-        histograms[i + 2] = new wxBitmap(pieHistogramPanel->GetSize().GetX(), pieHistogramPanel->GetSize().GetY(), 24);
+        histogramBitmaps[i] = new wxBitmap(histogramPanel->GetSize().GetX(), histogramPanel->GetSize().GetY(), 24);
+        histogramBitmaps[i + 2] = new wxBitmap(pieHistogramPanel->GetSize().GetX(), pieHistogramPanel->GetSize().GetY(), 24);
     }
 
     Bind(wxEVT_SHOW, &MainWindow::OnShow, this);
@@ -150,23 +150,21 @@ void MainWindow::ProcessFile(const wxString& fileName)
 
 void MainWindow::DrawHistogram(const Histogram& histogram)
 {
-    wxBitmap& bitmap = *histograms[0];
-    wxBitmap& logBitmap = *histograms[1];
-    wxBitmap& pieBitmap = *histograms[2];
-    wxBitmap& pieLogBitmap = *histograms[3];
+    wxBitmap& normalBitmap = *histogramBitmaps[normalHistogramIndex * histogramScaleTypes + linearHistogramIndex];
+    wxBitmap& pieBitmap = *histogramBitmaps[pieHistogramIndex * histogramScaleTypes + linearHistogramIndex];
 
-    auto bitmapHeight = bitmap.GetHeight();
+    auto bitmapHeight = normalBitmap.GetHeight();
 
-    wxMemoryDC dcs[4];
-    wxMemoryDC& linearDC = dcs[0];
-    wxMemoryDC& linearDCLog = dcs[1];
-    wxMemoryDC& pieDC = dcs[2];
-    wxMemoryDC& pieDCLog = dcs[3];
+    wxMemoryDC dcs[histogramLayoutTypes * histogramScaleTypes];
+    wxMemoryDC& normalDC = dcs[normalHistogramIndex * histogramScaleTypes + linearHistogramIndex];
+    wxMemoryDC& normalDCLog = dcs[normalHistogramIndex * histogramScaleTypes + logHistogramIndex];
+    wxMemoryDC& pieDC = dcs[pieHistogramIndex * histogramScaleTypes + linearHistogramIndex];
+    wxMemoryDC& pieDCLog = dcs[pieHistogramIndex * histogramScaleTypes + logHistogramIndex];
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < sizeof(dcs) / sizeof(dcs[0]); i++)
     {
         auto& dc = dcs[i];
-        dc.SelectObject(*histograms[i]);
+        dc.SelectObject(*histogramBitmaps[i]);
         dc.SetBackground(wxBrush(histogramPanel->GetBackgroundColour()));
         dc.Clear();
     }
@@ -191,9 +189,9 @@ void MainWindow::DrawHistogram(const Histogram& histogram)
             dc.SetPen(pen);
         }
 
-        linearDC.DrawLine(wxPoint(hue, bitmapHeight - 1), 
+        normalDC.DrawLine(wxPoint(hue, bitmapHeight - 1), 
             wxPoint(hue, bitmapHeight - value * bitmapHeight / maxValue - 1));
-        linearDCLog.DrawLine(wxPoint(hue, bitmapHeight - 1),
+        normalDCLog.DrawLine(wxPoint(hue, bitmapHeight - 1),
             wxPoint(hue, bitmapHeight - log10(value) * bitmapHeight / maxValueLog - 1));
         
         auto angle = DEG2RAD(hue);
@@ -271,10 +269,10 @@ void MainWindow::DisplaySampleValues(const Histogram& histogram)
 
 void MainWindow::RefreshHistogramsDisplay()
 {
-    int indexShift = logValuesCheckBox->IsChecked() ? 1 : 0;
+    int indexShift = logValuesCheckBox->IsChecked() ? logHistogramIndex : linearHistogramIndex;
 
-    histogramPanel->SetBitmap(*histograms[0 + indexShift]);
-    pieHistogramPanel->SetBitmap(*histograms[2 + indexShift]);
+    histogramPanel->SetBitmap(*histogramBitmaps[normalHistogramIndex * histogramScaleTypes + indexShift]);
+    pieHistogramPanel->SetBitmap(*histogramBitmaps[pieHistogramIndex * histogramScaleTypes + indexShift]);
 }
 
 void MainWindow::OnLogValuesCheckBoxClick(wxCommandEvent& event)

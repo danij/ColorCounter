@@ -14,15 +14,22 @@ public:
     virtual ~MainWindow();
 
 protected:
+    static const int displaySaturation = 255;
+    static const int displayValue = 224;
+    static const int normalHistogramIndex = 0;
+    static const int pieHistogramIndex = 1;
+    static const int linearHistogramIndex = 0;
+    static const int logHistogramIndex = 1;
+    static const int histogramLayoutTypes = 2; //normal and pie
+    static const int histogramScaleTypes = 2; //linear and log
+
     wxComboBox* sampleRangesComboBox;
     ImagePanel* histogramPanel;
     ImagePanel* pieHistogramPanel;
     ColorListBox* resultListBox;
     wxCheckBox* logValuesCheckBox;
     HueProcessor hueProcessor;
-    wxBitmap* histograms[4];
-    const int displaySaturation = 255;
-    const int displayValue = 224;
+    wxBitmap* histogramBitmaps[histogramLayoutTypes * histogramScaleTypes];
 
     void Initialize();
     void ProcessFile(const wxString& fileName);
