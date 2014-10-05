@@ -22,8 +22,8 @@ protected:
     static const int logHistogramIndex = 1;
     static const int histogramLayoutTypes = 2; //normal and pie
     static const int histogramScaleTypes = 2; //linear and log
-    static const int histogramTransitionDuration = 500; //ms
-    static const int histogramTransitionFPS = 10;
+    static const int histogramTransitionDuration = 200; //ms
+    static const int histogramTransitionFPS = 20;
 
     wxComboBox* sampleRangesComboBox;
     ImagePanel* histogramPanel;

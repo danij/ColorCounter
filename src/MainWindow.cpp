@@ -37,7 +37,6 @@ MainWindow::~MainWindow()
             delete subItem;
         }
     }
-
 }
 
 void MainWindow::Initialize()
