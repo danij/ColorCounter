@@ -19,7 +19,7 @@ using namespace std;
 
 MainWindow::MainWindow()
     : wxFrame(NULL, wxID_ANY, wxT("Color Counter"), wxDefaultPosition, wxSize(800, 650)),
-    histogramTransitionIndex(0), histogramTransitionDirection(1)
+    windowClosing(false), histogramTransitionIndex(0), histogramTransitionDirection(1)
 {
     Initialize();
 }
@@ -98,6 +98,7 @@ void MainWindow::Initialize()
     histogramTransitionTimer = new wxTimer(this);
 
     Bind(wxEVT_SHOW, &MainWindow::OnShow, this);
+    Bind(wxEVT_CLOSE_WINDOW, &MainWindow::OnClose, this);
     Bind(wxEVT_COMMAND_BUTTON_CLICKED, &MainWindow::OnSelectImageClick, this, selectImageButton->GetId());
     Bind(wxEVT_COMMAND_COMBOBOX_SELECTED, &MainWindow::OnSampleRangeChange, this, sampleRangesComboBox->GetId());
     Bind(wxEVT_CHECKBOX, &MainWindow::OnLogValuesCheckBoxClick, this, logValuesCheckBox->GetId());
@@ -112,6 +113,12 @@ void MainWindow::OnShow(wxShowEvent& event)
     }
 
     sampleRangesComboBox->Select(2);
+}
+
+void MainWindow::OnClose(wxCloseEvent& event)
+{
+    windowClosing = true;
+    Destroy();
 }
 
 void MainWindow::OnSelectImageClick(wxCommandEvent& event)
@@ -343,6 +350,11 @@ void MainWindow::OnLogValuesCheckBoxClick(wxCommandEvent& event)
 
 void MainWindow::OnHistogramTransitionTimer(wxTimerEvent& event)
 {
+    if (windowClosing)
+    {
+        return;
+    }
+
     if (histogramTransitionIndex >= histogramTransitionFPS)
     {
         histogramPanel->SetBitmap(*histogramBitmaps[normalHistogramIndex * histogramScaleTypes + logHistogramIndex]);

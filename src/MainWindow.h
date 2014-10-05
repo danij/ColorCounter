@@ -25,6 +25,7 @@ protected:
     static const int histogramTransitionDuration = 200; //ms
     static const int histogramTransitionFPS = 20;
 
+    bool windowClosing;
     wxComboBox* sampleRangesComboBox;
     ImagePanel* histogramPanel;
     ImagePanel* pieHistogramPanel;
@@ -37,13 +38,14 @@ protected:
     int histogramTransitionIndex;
     int histogramTransitionDirection;
 
-    void Initialize();
+    void Initialize();    
     void ProcessFile(const wxString& fileName);
     void DrawHistogram(const Histogram& histogram);
     void RefreshSampleValues();
     void DisplaySampleValues(const Histogram& histogram);
     void RefreshHistogramsDisplay();
     void OnShow(wxShowEvent& event);
+    void OnClose(wxCloseEvent& event);
     void OnSelectImageClick(wxCommandEvent& event);
     void OnSampleRangeChange(wxCommandEvent& event);
     void OnLogValuesCheckBoxClick(wxCommandEvent& event);
