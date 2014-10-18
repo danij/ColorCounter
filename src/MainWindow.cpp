@@ -53,6 +53,10 @@ void MainWindow::Initialize()
     SetMinClientSize(wxSize(800, 650));
     DragAcceptFiles(true);
 
+#ifdef __WXMSW__
+    SetIcon(wxIcon("IDI_ICON1"));
+#endif
+
     auto mainPanel = new wxPanel(this);
 
     auto settingsSizer = new wxStaticBoxSizer(wxHORIZONTAL, mainPanel, wxT("Settings"));
