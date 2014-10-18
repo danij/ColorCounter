@@ -19,7 +19,8 @@ using namespace std;
 
 MainWindow::MainWindow()
     : wxFrame(NULL, wxID_ANY, wxT("Color Counter"), wxDefaultPosition, wxSize(800, 650)),
-    windowClosing(false), histogramTransitionIndex(0), histogramTransitionDirection(1)
+    windowClosing(false), histogramTransitionIndex(0), histogramTransitionDirection(1),
+    openRequestTimer(nullptr)
 {
     Initialize();
 }
@@ -37,7 +38,14 @@ MainWindow::~MainWindow()
             delete subItem;
         }
     }
-    delete openRequestTimer;
+    if (nullptr != openRequestTimer)
+    {
+        delete openRequestTimer;
+    }
+    if (nullptr != histogramTransitionTimer)
+    {
+        delete histogramTransitionTimer;
+    }
 }
 
 void MainWindow::Initialize()
