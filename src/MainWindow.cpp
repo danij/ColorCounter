@@ -191,14 +191,12 @@ void MainWindow::OnSelectImageClick(wxCommandEvent& event)
 
 void MainWindow::ProcessFile(const wxString& fileName)
 {
-    auto previousCursor = GetCursor();
-    SetCursor(wxCURSOR_WAIT);
+    wxBusyCursor busyCursor;
 
     wxImage image(fileName);
     if (!image.IsOk())
     {
         wxMessageBox(wxT("The image you have selected is invalid!"), wxT("Error"), wxOK | wxICON_ERROR, this);
-        SetCursor(previousCursor);
         return;
     }
 
@@ -214,8 +212,6 @@ void MainWindow::ProcessFile(const wxString& fileName)
 
     DrawHistogram(hueProcessor.GetHueHistogram());
     RefreshSampleValues();
-
-    SetCursor(previousCursor);
 }
 
 void MainWindow::DrawHistogram(const Histogram& histogram)
