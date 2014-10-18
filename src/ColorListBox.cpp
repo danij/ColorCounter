@@ -37,7 +37,7 @@ void ColorListBox::OnDrawItem(wxDC &dc, const wxRect &rect, size_t n) const
     dc.DrawRectangle(wxPoint(rect.x + borderSize, rect.y + borderSize), 
         wxSize(itemSize - 2 * borderSize, itemSize - 2 * borderSize));
 
-    if (IsSelected(n))
+    if (IsSelected(n) && FindFocus() == this)
     {
         dc.SetTextForeground(*wxWHITE);
     }
