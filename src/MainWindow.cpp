@@ -37,6 +37,7 @@ MainWindow::~MainWindow()
             delete subItem;
         }
     }
+    delete openRequestTimer;
 }
 
 void MainWindow::Initialize()
@@ -105,6 +106,11 @@ void MainWindow::Initialize()
     Bind(wxEVT_TIMER, &MainWindow::OnHistogramTransitionTimer, this, histogramTransitionTimer->GetId());
 }
 
+void MainWindow::SetCommandLineOpenRequest(const wxString& fileName)
+{
+    commandLineOpenRequest = fileName;
+}
+
 void MainWindow::OnShow(wxShowEvent& event)
 {
     for (auto& i : { 15, 30, 60, 120 })
@@ -113,7 +119,23 @@ void MainWindow::OnShow(wxShowEvent& event)
     }
 
     sampleRangesComboBox->Select(2);
+    
+    if ( ! commandLineOpenRequest.IsEmpty())
+    {
+        openRequestTimer = new wxTimer(this);
+        Bind(wxEVT_TIMER, &MainWindow::OnOpenRequestTimer, this, openRequestTimer->GetId());
+        openRequestTimer->StartOnce(100);
+    }
 }
+
+void MainWindow::OnOpenRequestTimer(wxTimerEvent& event)
+{
+    if ( ! commandLineOpenRequest.IsEmpty())
+    {
+        ProcessFile(commandLineOpenRequest);
+    }
+}
+
 
 void MainWindow::OnClose(wxCloseEvent& event)
 {
@@ -145,20 +167,19 @@ void MainWindow::OnSelectImageClick(wxCommandEvent& event)
         return;
     }
     
-    auto previousCursor = GetCursor();
-    SetCursor(wxCURSOR_WAIT);
-
     ProcessFile(openFileDialog.GetPath());
-
-    SetCursor(previousCursor);
 }
 
 void MainWindow::ProcessFile(const wxString& fileName)
 {
+    auto previousCursor = GetCursor();
+    SetCursor(wxCURSOR_WAIT);
+
     wxImage image(fileName);
-    if ( ! image.IsOk())
+    if (!image.IsOk())
     {
         wxMessageBox(wxT("The image you have selected is invalid!"), wxT("Error"), wxOK | wxICON_ERROR, this);
+        SetCursor(previousCursor);
         return;
     }
 
@@ -171,9 +192,11 @@ void MainWindow::ProcessFile(const wxString& fileName)
             hueProcessor.ProcessRGB(image.GetRed(x, y), image.GetGreen(x, y), image.GetBlue(x, y));
         }
     }
-    
+
     DrawHistogram(hueProcessor.GetHueHistogram());
     RefreshSampleValues();
+
+    SetCursor(previousCursor);
 }
 
 void MainWindow::DrawHistogram(const Histogram& histogram)

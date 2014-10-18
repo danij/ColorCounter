@@ -10,6 +10,10 @@ bool ColorCounterApp::OnInit()
     wxImage::AddHandler(new wxGIFHandler());
 
     auto mainWindow = new MainWindow();
+    if (argc > 1)
+    {
+        mainWindow->SetCommandLineOpenRequest(argv[1]);
+    }
     mainWindow->Show();
     return true;
 }

@@ -12,6 +12,7 @@ class MainWindow : public wxFrame
 public:
     MainWindow();
     virtual ~MainWindow();
+    void SetCommandLineOpenRequest(const wxString& fileName);
 
 protected:
     static const int displaySaturation = 255;
@@ -37,6 +38,8 @@ protected:
     wxTimer* histogramTransitionTimer;
     int histogramTransitionIndex;
     int histogramTransitionDirection;
+    wxString commandLineOpenRequest;
+    wxTimer* openRequestTimer;
 
     void Initialize();    
     void ProcessFile(const wxString& fileName);
@@ -50,6 +53,7 @@ protected:
     void OnSampleRangeChange(wxCommandEvent& event);
     void OnLogValuesCheckBoxClick(wxCommandEvent& event);
     void OnHistogramTransitionTimer(wxTimerEvent& event);
+    void OnOpenRequestTimer(wxTimerEvent& event);
 };
 
 #endif
