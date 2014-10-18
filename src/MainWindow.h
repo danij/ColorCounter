@@ -54,6 +54,7 @@ protected:
     void OnLogValuesCheckBoxClick(wxCommandEvent& event);
     void OnHistogramTransitionTimer(wxTimerEvent& event);
     void OnOpenRequestTimer(wxTimerEvent& event);
+    void OnDropFile(wxDropFilesEvent& event);
 };
 
 #endif

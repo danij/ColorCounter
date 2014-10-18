@@ -51,6 +51,7 @@ MainWindow::~MainWindow()
 void MainWindow::Initialize()
 {
     SetMinClientSize(wxSize(800, 650));
+    DragAcceptFiles(true);
 
     auto mainPanel = new wxPanel(this);
 
@@ -112,6 +113,7 @@ void MainWindow::Initialize()
     Bind(wxEVT_COMMAND_COMBOBOX_SELECTED, &MainWindow::OnSampleRangeChange, this, sampleRangesComboBox->GetId());
     Bind(wxEVT_CHECKBOX, &MainWindow::OnLogValuesCheckBoxClick, this, logValuesCheckBox->GetId());
     Bind(wxEVT_TIMER, &MainWindow::OnHistogramTransitionTimer, this, histogramTransitionTimer->GetId());
+    Bind(wxEVT_DROP_FILES, &MainWindow::OnDropFile, this, NULL);
 }
 
 void MainWindow::SetCommandLineOpenRequest(const wxString& fileName)
@@ -144,11 +146,20 @@ void MainWindow::OnOpenRequestTimer(wxTimerEvent& event)
     }
 }
 
-
 void MainWindow::OnClose(wxCloseEvent& event)
 {
     windowClosing = true;
     Destroy();
+}
+
+void MainWindow::OnDropFile(wxDropFilesEvent& event)
+{
+    if (event.GetNumberOfFiles() < 1)
+    {
+        return;
+    }
+
+    ProcessFile(event.GetFiles()[0]);
 }
 
 void MainWindow::OnSelectImageClick(wxCommandEvent& event)
