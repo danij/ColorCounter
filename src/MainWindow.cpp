@@ -18,7 +18,7 @@ using namespace std;
 #endif
 
 MainWindow::MainWindow()
-    : wxFrame(NULL, wxID_ANY, wxT("Color Counter"), wxDefaultPosition, wxSize(800, 650)),
+    : wxFrame(NULL, wxID_ANY, wxT("Color Counter"), wxDefaultPosition, wxSize(800, 670)),
     windowClosing(false), histogramTransitionIndex(0), histogramTransitionDirection(1),
     openRequestTimer(nullptr)
 {
@@ -68,7 +68,7 @@ void MainWindow::Initialize()
     settingsSizer->Add(valuesLabel, wxSizerFlags(0).Center().Border(wxLEFT | wxRIGHT, 5));
     settingsSizer->Add(sampleRangesComboBox, wxSizerFlags(1).Center().Border(wxLEFT | wxRIGHT, 5));
     settingsSizer->Add(logValuesCheckBox, wxSizerFlags(0).Center().Border(wxLEFT | wxRIGHT, 5));
-    settingsSizer->Add(selectImageButton, wxSizerFlags(0).Center().Border(wxLEFT, 5));
+    settingsSizer->Add(selectImageButton, wxSizerFlags(0).Center().Border(wxLEFT | wxRIGHT, 5));
 
     auto resultSizer = new wxStaticBoxSizer(wxHORIZONTAL, mainPanel, wxT("Results"));
     
@@ -84,7 +84,7 @@ void MainWindow::Initialize()
 
     resultListBox = new ColorListBox(resultSizer->GetStaticBox(), wxID_ANY);
     resultSizer->Add(histogramParentPanel, wxSizerFlags(0).Border(wxLEFT | wxRIGHT, 5));
-    resultSizer->Add(resultListBox, wxSizerFlags(1).Expand().Border(wxLEFT, 5));
+    resultSizer->Add(resultListBox, wxSizerFlags(1).Expand().Border(wxLEFT | wxRIGHT, 5));
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
     mainSizer->Add(settingsSizer, wxSizerFlags(0).Expand().Border(wxALL, 5));
