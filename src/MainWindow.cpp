@@ -71,7 +71,7 @@ void MainWindow::Initialize()
     settingsSizer->Add(selectImageButton, wxSizerFlags(0).Center().Border(wxLEFT | wxRIGHT, 5));
 
     auto resultSizer = new wxStaticBoxSizer(wxHORIZONTAL, mainPanel, wxT("Results"));
-    
+
     auto histogramParentPanel = new wxPanel(resultSizer->GetStaticBox(), wxID_ANY);
     auto histogramSizer = new wxBoxSizer(wxVERTICAL);
     auto histogramSplitterLine = new wxStaticLine(histogramParentPanel, wxID_ANY);
@@ -99,7 +99,7 @@ void MainWindow::Initialize()
         auto panel = panels[i];
         for (int j = 0; j < histogramScaleTypes; j++)
         {
-            histogramBitmaps[i * histogramScaleTypes + j] = 
+            histogramBitmaps[i * histogramScaleTypes + j] =
                 new wxBitmap(panel->GetSize().GetX(), panel->GetSize().GetY(), 24);
         }
         for (int j = 0; j < histogramTransitionFPS; j++)
@@ -133,7 +133,7 @@ void MainWindow::OnShow(wxShowEvent& event)
     }
 
     sampleRangesComboBox->Select(2);
-    
+
     if ( ! commandLineOpenRequest.IsEmpty())
     {
         openRequestTimer = new wxTimer(this);
@@ -183,13 +183,13 @@ void MainWindow::OnSelectImageClick(wxCommandEvent& event)
 
     filter = wxT("Image Files|") + wxJoin(extensions, ';') + wxT("|All Files|*.*");
 
-    wxFileDialog openFileDialog(this, wxT("Select Image"), wxEmptyString, wxEmptyString, filter, 
+    wxFileDialog openFileDialog(this, wxT("Select Image"), wxEmptyString, wxEmptyString, filter,
         wxFD_OPEN | wxFD_FILE_MUST_EXIST);
     if (openFileDialog.ShowModal() == wxID_CANCEL)
     {
         return;
     }
-    
+
     ProcessFile(openFileDialog.GetPath());
 }
 
@@ -258,7 +258,7 @@ void MainWindow::DrawHistogram(const Histogram& histogram)
         auto hue = pair.first;
         auto value = pair.second;
         unsigned char r, g, b;
-        
+
         HsvToRgb(hue, displaySaturation, displayValue, r, g, b);
         auto pen = wxPen(wxColour(r, g, b));
 
@@ -270,17 +270,26 @@ void MainWindow::DrawHistogram(const Histogram& histogram)
         {
             auto linearY = bitmapHeight - value * bitmapHeight / maxValue - 1;
             auto logY = bitmapHeight - log10(value) * bitmapHeight / maxValueLog - 1;
-            normalDC.DrawLine(wxPoint(hue, bitmapHeight - 1), wxPoint(hue, linearY));
-            normalDCLog.DrawLine(wxPoint(hue, bitmapHeight - 1), wxPoint(hue, logY));
+            for (int y = bitmapHeight - 1; y >= linearY; y--)
+            {
+            	normalDC.DrawPoint(hue, y);
+            }
+            for (int y = bitmapHeight - 1; y >= logY; y--)
+            {
+            	normalDCLog.DrawPoint(hue, y);
+            }
 
             for (int i = 0; i < histogramTransitionFPS; i++)
             {
                 auto height = linearY - i * (linearY - logY) / histogramTransitionFPS;
                 auto& dc = dcs[histogramLayoutTypes * histogramScaleTypes + i];
-                dc.DrawLine(wxPoint(hue, bitmapHeight - 1), wxPoint(hue, height));
+                for (int y = bitmapHeight - 1; y >= height; y--)
+                {
+                    dc.DrawPoint(hue, y);
+                }
             }
         }
-        
+
         auto angle = DEG2RAD(hue);
         auto nextAngle = DEG2RAD((hue + 1) % 360);
         auto circleRadius = pieRadius / 8;
@@ -319,7 +328,7 @@ void MainWindow::DrawHistogram(const Histogram& histogram)
         }
 
     }
-    
+
     for (auto& dc : dcs)
     {
         dc.SelectObject(wxNullBitmap);
@@ -350,7 +359,7 @@ void MainWindow::DisplaySampleValues(const Histogram& histogram)
     {
         total += pair.second;
     }
-    
+
     for (auto& pair : histogram)
     {
         float percent = (float)pair.second / total * 100;
