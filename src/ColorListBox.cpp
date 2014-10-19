@@ -32,6 +32,7 @@ void ColorListBox::SetItems(const std::vector<ColorPercent>& items)
 void ColorListBox::OnDrawItem(wxDC &dc, const wxRect &rect, size_t n) const
 {
     auto& item = items[n];
+    dc.SetPen(wxPen(item.GetColor()));
     dc.SetBrush(wxBrush(item.GetColor()));
 
     dc.DrawRectangle(wxPoint(rect.x + borderSize, rect.y + borderSize), 
