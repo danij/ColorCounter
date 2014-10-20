@@ -41,6 +41,23 @@ void HueProcessor::ProcessRGB(unsigned char r, unsigned char g, unsigned char b)
     hueHistogram.Add(h);
 }
 
+void HueProcessor::ProcessRGB(unsigned char* rgb, size_t width, size_t height)
+{
+    int i = 0;
+    int max = width * height;
+    unsigned char* r = rgb;
+    unsigned char* g = r + 1;
+    unsigned char* b = g + 1;
+    while (i < max)
+    {
+        ProcessRGB(*r, *g, *b);
+        r += 3;
+        g += 3;
+        b += 3;
+        ++i;
+    }
+}
+
 void HueProcessor::CalculateSamples(int sampleRange)
 {
     huePartialHistogram.Clear();

@@ -43,9 +43,9 @@ protected:
 
     void Initialize();    
     void ProcessFile(const wxString& fileName);
-    void DrawHistogram(const Histogram& histogram);
+    void DrawHistogram(Histogram& histogram);
     void RefreshSampleValues();
-    void DisplaySampleValues(const Histogram& histogram);
+    void DisplaySampleValues(Histogram& histogram);
     void RefreshHistogramsDisplay();
     void OnShow(wxShowEvent& event);
     void OnClose(wxCloseEvent& event);

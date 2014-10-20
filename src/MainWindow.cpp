@@ -205,20 +205,13 @@ void MainWindow::ProcessFile(const wxString& fileName)
     }
 
     hueProcessor.Clear();
-
-    for (int y = 0; y < image.GetHeight(); ++y)
-    {
-        for (int x = 0; x < image.GetWidth(); ++x)
-        {
-            hueProcessor.ProcessRGB(image.GetRed(x, y), image.GetGreen(x, y), image.GetBlue(x, y));
-        }
-    }
+    hueProcessor.ProcessRGB(image.GetData(), image.GetWidth(), image.GetHeight());
 
     DrawHistogram(hueProcessor.GetHueHistogram());
     RefreshSampleValues();
 }
 
-void MainWindow::DrawHistogram(const Histogram& histogram)
+void MainWindow::DrawHistogram(Histogram& histogram)
 {
     wxBitmap& normalBitmap = *histogramBitmaps[normalHistogramIndex * histogramScaleTypes + linearHistogramIndex];
     wxBitmap& pieBitmap = *histogramBitmaps[pieHistogramIndex * histogramScaleTypes + linearHistogramIndex];
@@ -349,7 +342,7 @@ void MainWindow::OnSampleRangeChange(wxCommandEvent& event)
     RefreshSampleValues();
 }
 
-void MainWindow::DisplaySampleValues(const Histogram& histogram)
+void MainWindow::DisplaySampleValues(Histogram& histogram)
 {
     resultListBox->Clear();
     vector<ColorPercent> items;

@@ -41,12 +41,12 @@ int Histogram::MaxValue() const
     return max;
 }
 
-map<int, int>::const_iterator Histogram::begin() const
+map<int, int>::const_iterator Histogram::begin()
 {
     return values.cbegin();
 }
 
-map<int, int>::const_iterator Histogram::end() const
+map<int, int>::const_iterator Histogram::end()
 {
     return values.cend();
 }

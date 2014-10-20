@@ -1,7 +1,7 @@
 #ifndef _HUEPROCESSOR_H__
 #define _HUEPROCESSOR_H__
 
-#include "Histogram.h"
+#include "HueHistogram.h"
 #include "ImageProcessing.h"
 
 class HueProcessor
@@ -13,11 +13,12 @@ public:
     Histogram& GetHueHistogram();
     Histogram& GetHuePartialHistogram();
     void ProcessRGB(unsigned char r, unsigned char g, unsigned char b);
+    void ProcessRGB(unsigned char* rgb, size_t width, size_t height);
     void CalculateSamples(int sampleRange); 
 
 private:
-    Histogram hueHistogram;
-    Histogram huePartialHistogram;
+    HueHistogram hueHistogram;
+    HueHistogram huePartialHistogram;
 };
 
 #endif
