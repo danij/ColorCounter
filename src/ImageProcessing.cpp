@@ -93,4 +93,3 @@ void RgbToHsv(unsigned char r, unsigned char g, unsigned char b,
 
     return;
 }
-
