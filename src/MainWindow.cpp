@@ -117,7 +117,7 @@ void MainWindow::Initialize()
     Bind(wxEVT_COMMAND_COMBOBOX_SELECTED, &MainWindow::OnSampleRangeChange, this, sampleRangesComboBox->GetId());
     Bind(wxEVT_CHECKBOX, &MainWindow::OnLogValuesCheckBoxClick, this, logValuesCheckBox->GetId());
     Bind(wxEVT_TIMER, &MainWindow::OnHistogramTransitionTimer, this, histogramTransitionTimer->GetId());
-    Bind(wxEVT_DROP_FILES, &MainWindow::OnDropFile, this, NULL);
+    Bind(wxEVT_DROP_FILES, &MainWindow::OnDropFile, this, wxID_ANY);
 }
 
 void MainWindow::SetCommandLineOpenRequest(const wxString& fileName)
