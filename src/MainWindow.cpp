@@ -84,7 +84,7 @@ void MainWindow::Initialize()
 
     resultListBox = new ColorListBox(resultSizer->GetStaticBox(), wxID_ANY);
     resultSizer->Add(histogramParentPanel, wxSizerFlags(0).Border(wxLEFT | wxRIGHT, 5));
-    resultSizer->Add(resultListBox, wxSizerFlags(1).Expand().Border(wxLEFT | wxRIGHT, 5));
+    resultSizer->Add(resultListBox, wxSizerFlags(1).Expand().Border(wxLEFT | wxRIGHT | wxBOTTOM, 5));
 
     auto mainSizer = new wxBoxSizer(wxVERTICAL);
     mainSizer->Add(settingsSizer, wxSizerFlags(0).Expand().Border(wxALL, 5));
