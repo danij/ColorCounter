@@ -10,34 +10,20 @@
 #include "HueProcessor.h"
 #include "ImageProcessing.h"
 #include "ColorPercent.h"
+#include "HistogramPlotter.h"
 
 using namespace std;
 
-#ifndef DEG2RAD
-#define DEG2RAD(deg) ((float)(deg) * M_PI / 180)
-#endif
-
 MainWindow::MainWindow()
-    : wxFrame(NULL, wxID_ANY, wxT("Color Counter"), wxDefaultPosition, wxSize(800, 670)),
+    : wxFrame(NULL, wxID_ANY, wxT("Color Counter"), wxDefaultPosition, wxSize(800, 750)),
     windowClosing(false), histogramTransitionIndex(0), histogramTransitionDirection(1),
-    openRequestTimer(nullptr)
+    openRequestTimer(nullptr), plotCache(new HistogramPlotCache())
 {
     Initialize();
 }
 
 MainWindow::~MainWindow()
 {
-    for (auto& item : histogramBitmaps)
-    {
-        delete item;
-    }
-    for (auto& item : histogramTransitionFrames)
-    {
-        for (auto& subItem : item)
-        {
-            delete subItem;
-        }
-    }
     if (nullptr != openRequestTimer)
     {
         delete openRequestTimer;
@@ -50,7 +36,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::Initialize()
 {
-    SetMinClientSize(wxSize(800, 650));
+    SetMinClientSize(wxSize(800, 700));
     DragAcceptFiles(true);
 
 #ifdef __WXMSW__
@@ -76,9 +62,9 @@ void MainWindow::Initialize()
     auto histogramSizer = new wxBoxSizer(wxVERTICAL);
     auto histogramSplitterLine = new wxStaticLine(histogramParentPanel, wxID_ANY);
     histogramPanel = new ImagePanel(histogramParentPanel, wxID_ANY, wxDefaultPosition, wxSize(360, 200));
-    pieHistogramPanel = new ImagePanel(histogramParentPanel, wxID_ANY, wxDefaultPosition, wxSize(360, 300));
-    histogramSizer->Add(histogramPanel, wxSizerFlags(0).Border(wxTOP, 5));
-    histogramSizer->Add(histogramSplitterLine, wxSizerFlags(0).Expand().Border(wxTOP | wxBOTTOM, 5));
+    pieHistogramPanel = new ImagePanel(histogramParentPanel, wxID_ANY, wxDefaultPosition, wxSize(360, 360));
+    histogramSizer->Add(histogramPanel, wxSizerFlags(0).Border(wxTOP, 0));
+    histogramSizer->Add(histogramSplitterLine, wxSizerFlags(0).Expand().Border(wxTOP | wxBOTTOM, 10));
     histogramSizer->Add(pieHistogramPanel, wxSizerFlags(0).Border(wxBOTTOM, 5));
     histogramParentPanel->SetSizer(histogramSizer);
 
@@ -99,13 +85,13 @@ void MainWindow::Initialize()
         auto panel = panels[i];
         for (int j = 0; j < histogramScaleTypes; j++)
         {
-            histogramBitmaps[i * histogramScaleTypes + j] =
-                new wxBitmap(panel->GetSize().GetX(), panel->GetSize().GetY(), 24);
+            histogramBitmaps[i][j] = 
+                shared_ptr<wxBitmap>(new wxBitmap(panel->GetSize().GetX(), panel->GetSize().GetY(), 32));
         }
         for (int j = 0; j < histogramTransitionFPS; j++)
         {
-            histogramTransitionFrames[i][j] =
-                new wxBitmap(panel->GetSize().GetX(), panel->GetSize().GetY(), 24);
+            histogramTransitionFrames[i][j] = 
+                shared_ptr<wxBitmap>(new wxBitmap(panel->GetSize().GetX(), panel->GetSize().GetY(), 32));
         }
     }
 
@@ -213,118 +199,41 @@ void MainWindow::ProcessFile(const wxString& fileName)
 
 void MainWindow::DrawHistogram(Histogram& histogram)
 {
-    wxBitmap& normalBitmap = *histogramBitmaps[normalHistogramIndex * histogramScaleTypes + linearHistogramIndex];
-    wxBitmap& pieBitmap = *histogramBitmaps[pieHistogramIndex * histogramScaleTypes + linearHistogramIndex];
+    auto& normalBitmap = histogramBitmaps[normalHistogramIndex][linearHistogramIndex];
+    auto& normalLogBitmap = histogramBitmaps[normalHistogramIndex][logHistogramIndex];
+    auto& pieBitmap = histogramBitmaps[pieHistogramIndex][linearHistogramIndex];
+    auto& pieLogBitmap = histogramBitmaps[pieHistogramIndex][logHistogramIndex];
 
-    auto bitmapHeight = normalBitmap.GetHeight();
+    auto bitmapHeight = normalBitmap->GetHeight();
 
-    wxMemoryDC dcs[histogramLayoutTypes * histogramScaleTypes + histogramLayoutTypes * histogramTransitionFPS];
-    wxMemoryDC& normalDC = dcs[normalHistogramIndex * histogramScaleTypes + linearHistogramIndex];
-    wxMemoryDC& normalDCLog = dcs[normalHistogramIndex * histogramScaleTypes + logHistogramIndex];
-    wxMemoryDC& pieDC = dcs[pieHistogramIndex * histogramScaleTypes + linearHistogramIndex];
-    wxMemoryDC& pieDCLog = dcs[pieHistogramIndex * histogramScaleTypes + logHistogramIndex];
-
-    for (int i = 0; i < sizeof(dcs) / sizeof(dcs[0]); i++)
+    HistogramPlotter plotter(displaySaturation, displayValue, plotCache);
     {
-        auto& dc = dcs[i];
-        if (i < histogramLayoutTypes * histogramScaleTypes)
+        //normal plots
+        plotter.SetWidth(normalBitmap->GetWidth());
+        plotter.SetHeight(normalBitmap->GetHeight());
+
+        auto normalFrames = plotter.PlotFrames(histogram, histogramTransitionFPS);
+        for (size_t i = 0; i < normalFrames.size(); i++)
         {
-            dc.SelectObject(*histogramBitmaps[i]);
+            histogramTransitionFrames[normalHistogramIndex][i] =
+                shared_ptr<wxBitmap>(new wxBitmap(*(normalFrames[i]), 32));
         }
-        else
-        {
-            auto index = i - histogramLayoutTypes * histogramScaleTypes;
-            dc.SelectObject(*histogramTransitionFrames[index / histogramTransitionFPS][index % histogramTransitionFPS]);
-        }
-        dc.SetBackground(wxBrush(histogramPanel->GetBackgroundColour()));
-        dc.Clear();
+        normalBitmap = shared_ptr<wxBitmap>(new wxBitmap(*(normalFrames[0]), 32));
+        normalLogBitmap = shared_ptr<wxBitmap>(new wxBitmap(*(normalFrames[normalFrames.size() - 1]), 32));
     }
-
-    auto pieWidth = min(pieBitmap.GetWidth(), pieBitmap.GetHeight());
-    auto pieCenter = wxPoint(pieBitmap.GetWidth() / 2, pieBitmap.GetHeight() / 2);
-    auto pieRadius = pieWidth / 2;
-
-    auto maxValue = histogram.MaxValue();
-    auto maxValueLog = log10(histogram.MaxValue());
-    for (auto& pair : histogram)
     {
-        auto hue = pair.first;
-        auto value = pair.second;
-        unsigned char r, g, b;
+        //pie plots
+        plotter.SetWidth(pieBitmap->GetWidth());
+        plotter.SetHeight(pieBitmap->GetHeight());
 
-        HsvToRgb(hue, displaySaturation, displayValue, r, g, b);
-        auto pen = wxPen(wxColour(r, g, b));
-
-        for (auto& dc : dcs)
+        auto pieFrames = plotter.PlotPieFrames(histogram, histogramTransitionFPS);
+        for (size_t i = 0; i < pieFrames.size(); i++)
         {
-            dc.SetPen(pen);
+            histogramTransitionFrames[pieHistogramIndex][i] =
+                shared_ptr<wxBitmap>(new wxBitmap(*(pieFrames[i]), 32));
         }
-
-        {
-            auto linearY = bitmapHeight - value * bitmapHeight / maxValue - 1;
-            auto logY = bitmapHeight - log10(value) * bitmapHeight / maxValueLog - 1;
-            for (int y = bitmapHeight - 1; y >= linearY; y--)
-            {
-            	normalDC.DrawPoint(hue, y);
-            }
-            for (int y = bitmapHeight - 1; y >= logY; y--)
-            {
-            	normalDCLog.DrawPoint(hue, y);
-            }
-
-            for (int i = 0; i < histogramTransitionFPS; i++)
-            {
-                auto height = linearY - i * (linearY - logY) / histogramTransitionFPS;
-                auto& dc = dcs[histogramLayoutTypes * histogramScaleTypes + i];
-                for (int y = bitmapHeight - 1; y >= height; y--)
-                {
-                    dc.DrawPoint(hue, y);
-                }
-            }
-        }
-
-        auto angle = DEG2RAD(hue);
-        auto nextAngle = DEG2RAD((hue + 1) % 360);
-        auto circleRadius = pieRadius / 8;
-        auto radius = circleRadius + (pieRadius - circleRadius) * value / maxValue;
-        auto radiusLog = circleRadius + (pieRadius - circleRadius) * log10(value) / maxValueLog;
-
-        for (auto a = angle; a <= nextAngle; a += 0.0001)
-        {
-            auto pieOuter = wxPoint(pieCenter.x + cos(a) * radius, pieCenter.y - sin(a) * radius);
-            pieDC.DrawLine(pieCenter, pieOuter);
-
-            auto pieOuterLog = wxPoint(pieCenter.x + cos(a) * radiusLog, pieCenter.y - sin(a) * radiusLog);
-            pieDCLog.DrawLine(pieCenter, pieOuterLog);
-
-            for (int i = 0; i < histogramTransitionFPS; i++)
-            {
-                auto x = pieOuter.x + i * (pieOuterLog.x - pieOuter.x) / histogramTransitionFPS;
-                auto y = pieOuter.y - i * (pieOuter.y - pieOuterLog.y) / histogramTransitionFPS;
-                auto& dc = dcs[histogramLayoutTypes * histogramScaleTypes + histogramTransitionFPS + i];
-                dc.DrawLine(pieCenter, wxPoint(x, y));
-            }
-        }
-
-        for (auto dc : { &pieDC, &pieDCLog })
-        {
-            dc->SetPen(pieDC.GetBackground().GetColour());
-            dc->SetBrush(pieDC.GetBackground().GetColour());
-            dc->DrawCircle(pieCenter, circleRadius);
-        }
-        for (int i = 0; i < histogramTransitionFPS; i++)
-        {
-            auto dc = &dcs[histogramLayoutTypes * histogramScaleTypes + histogramTransitionFPS + i];
-            dc->SetPen(pieDC.GetBackground().GetColour());
-            dc->SetBrush(pieDC.GetBackground().GetColour());
-            dc->DrawCircle(pieCenter, circleRadius);
-        }
-
-    }
-
-    for (auto& dc : dcs)
-    {
-        dc.SelectObject(wxNullBitmap);
+        pieBitmap = shared_ptr<wxBitmap>(new wxBitmap(*(pieFrames[0]), 32));
+        pieLogBitmap = shared_ptr<wxBitmap>(new wxBitmap(*(pieFrames[pieFrames.size() - 1]), 32));
     }
 
     RefreshHistogramsDisplay();
@@ -374,10 +283,10 @@ void MainWindow::DisplaySampleValues(Histogram& histogram)
 
 void MainWindow::RefreshHistogramsDisplay()
 {
-    int indexShift = logValuesCheckBox->IsChecked() ? logHistogramIndex : linearHistogramIndex;
+    int scaleType = logValuesCheckBox->IsChecked() ? logHistogramIndex : linearHistogramIndex;
 
-    histogramPanel->SetBitmap(*histogramBitmaps[normalHistogramIndex * histogramScaleTypes + indexShift]);
-    pieHistogramPanel->SetBitmap(*histogramBitmaps[pieHistogramIndex * histogramScaleTypes + indexShift]);
+    histogramPanel->SetBitmap(*histogramBitmaps[normalHistogramIndex][scaleType]);
+    pieHistogramPanel->SetBitmap(*histogramBitmaps[pieHistogramIndex][scaleType]);
 }
 
 void MainWindow::OnLogValuesCheckBoxClick(wxCommandEvent& event)
@@ -401,16 +310,16 @@ void MainWindow::OnHistogramTransitionTimer(wxTimerEvent& event)
 
     if (histogramTransitionIndex >= histogramTransitionFPS)
     {
-        histogramPanel->SetBitmap(*histogramBitmaps[normalHistogramIndex * histogramScaleTypes + logHistogramIndex]);
-        pieHistogramPanel->SetBitmap(*histogramBitmaps[pieHistogramIndex * histogramScaleTypes + logHistogramIndex]);
+        histogramPanel->SetBitmap(*histogramBitmaps[normalHistogramIndex][logHistogramIndex]);
+        pieHistogramPanel->SetBitmap(*histogramBitmaps[pieHistogramIndex][logHistogramIndex]);
         histogramTransitionTimer->Stop();
         histogramTransitionIndex = histogramTransitionFPS - 1;
         return;
     }
     if (histogramTransitionIndex < 0)
     {
-        histogramPanel->SetBitmap(*histogramBitmaps[normalHistogramIndex * histogramScaleTypes + linearHistogramIndex]);
-        pieHistogramPanel->SetBitmap(*histogramBitmaps[pieHistogramIndex * histogramScaleTypes + linearHistogramIndex]);
+        histogramPanel->SetBitmap(*histogramBitmaps[normalHistogramIndex][linearHistogramIndex]);
+        pieHistogramPanel->SetBitmap(*histogramBitmaps[pieHistogramIndex][linearHistogramIndex]);
         histogramTransitionTimer->Stop();
         histogramTransitionIndex = 0;
         return;

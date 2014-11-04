@@ -26,6 +26,7 @@ set(SOURCE_FILES
     src/ImagePanel.cpp
     src/ImageProcessing.cpp
     src/Histogram.cpp
+    src/HistogramPlotter.cpp
     src/HueProcessor.cpp
     src/ColorPercent.cpp
     src/ColorListBox.cpp)
@@ -36,6 +37,7 @@ set(HEADER_FILES
     src/ImagePanel.h
     src/ImageProcessing.h
     src/Histogram.h
+    src/HistogramPlotter.h
     src/HueProcessor.h
     src/ColorPercent.h
     src/ColorListBox.h)

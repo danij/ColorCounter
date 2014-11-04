@@ -2,10 +2,12 @@
 #define _MAINWINDOW_H__
 
 #include <wx/wx.h>
+#include <memory>
 #include "ImagePanel.h"
 #include "ColorListBox.h"
 #include "Histogram.h"
 #include "HueProcessor.h"
+#include "HistogramPlotter.h"
 
 class MainWindow : public wxFrame
 {
@@ -33,8 +35,9 @@ protected:
     ColorListBox* resultListBox;
     wxCheckBox* logValuesCheckBox;
     HueProcessor hueProcessor;
-    wxBitmap* histogramBitmaps[histogramLayoutTypes * histogramScaleTypes];
-    wxBitmap* histogramTransitionFrames[histogramLayoutTypes][histogramTransitionFPS];
+    std::shared_ptr<HistogramPlotCache> plotCache;
+    std::shared_ptr<wxBitmap> histogramBitmaps[histogramLayoutTypes][histogramScaleTypes];
+    std::shared_ptr<wxBitmap> histogramTransitionFrames[histogramLayoutTypes][histogramTransitionFPS];
     wxTimer* histogramTransitionTimer;
     int histogramTransitionIndex;
     int histogramTransitionDirection;

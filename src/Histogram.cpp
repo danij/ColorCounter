@@ -41,6 +41,11 @@ int Histogram::MaxValue() const
     return max;
 }
 
+int Histogram::operator[](size_t index)
+{
+    return values[index];
+}
+
 map<int, int>::const_iterator Histogram::begin()
 {
     return values.cbegin();

@@ -2,6 +2,7 @@
 #define _PAINTPANEL_H__
 
 #include <wx/wx.h>
+#include <wx/dcbuffer.h>
 
 class ImagePanel : public wxPanel
 {
@@ -13,7 +14,6 @@ public:
     void SetBitmap(const wxBitmap& bitmap);
 
 protected:
-    wxMemoryDC memoryDC;
     wxBitmap bitmap;
     void OnPaint(wxPaintEvent& event);
     void OnEraseBackground(wxEraseEvent& event);

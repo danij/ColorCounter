@@ -36,6 +36,11 @@ int HueHistogram::MaxValue() const
     return max;
 }
 
+int HueHistogram::operator[](size_t index)
+{
+    return values[index];
+}
+
 map<int, int>::const_iterator HueHistogram::begin() 
 {
     RefreshMap();

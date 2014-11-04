@@ -11,6 +11,7 @@ public:
     virtual void Add(int key, unsigned int value = 1);
     virtual void Clear();
     virtual int MaxValue() const;
+    virtual int operator[](size_t index);
     virtual std::map<int, int>::const_iterator begin();
     virtual std::map<int, int>::const_iterator end();
 
