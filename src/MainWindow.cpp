@@ -164,6 +164,8 @@ void MainWindow::OnSelectImageClick(wxCommandEvent& event)
         for (auto extension : handler->GetAltExtensions())
         {
             extensions.Add(prefix + extension);
+            extensions.Add(prefix + extension.Lower());
+            extensions.Add(prefix + extension.Upper());
         }
     }
 
