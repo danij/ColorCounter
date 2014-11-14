@@ -158,21 +158,24 @@ vector<unique_ptr<wxImage>> HistogramPlotter::PlotFrames(Histogram& histogram, s
     int linearValue, logValue, value;
     int hue;
 
-    for (auto x = 0; x < width; ++x)
-    {
-        hue = x * 360 / width;
-        linearValue = histogram[hue] * height / maxValue;
-        logValue = histogram[hue] > 0 ? log10(histogram[hue]) * height / maxValueLog : 0;
+	if (maxValue > 0)
+	{
+		for (auto x = 0; x < width; ++x)
+		{
+			hue = x * 360 / width;
+			linearValue = histogram[hue] * height / maxValue;
+			logValue = histogram[hue] > 0 ? log10(histogram[hue]) * height / maxValueLog : 0;
 
-        for (size_t frame = 0; frame < frameCount; ++frame)
-        {
-            value = linearValue + frame * (logValue - linearValue) / (frameCount - 1);
-            for (int y = height - value; y < height; ++y)
-            {
-                alphas[frame][y * width + x] = 255;
-            }
-        }
-    }
+			for (size_t frame = 0; frame < frameCount; ++frame)
+			{
+				value = linearValue + frame * (logValue - linearValue) / (frameCount - 1);
+				for (int y = height - value; y < height; ++y)
+				{
+					alphas[frame][y * width + x] = 255;
+				}
+			}
+		}
+	}
     for (size_t frame = 0; frame < frameCount; ++frame)
     {
         result.push_back(unique_ptr<wxImage>(new wxImage(width, height, datas[frame], alphas[frame], false)));
@@ -222,7 +225,7 @@ vector<unique_ptr<wxImage>> HistogramPlotter::PlotPieFrames(Histogram& histogram
         for (int y = 0; y < height; ++y)
         {
             hue = RAD2DEG(CalculateAngle(x, y, centerX, centerY));
-            linearValue = histogram[hue] * (radius - skipRadius) / maxValue;
+            linearValue = maxValue > 0 ? histogram[hue] * (radius - skipRadius) / maxValue : 0;
             logValue = histogram[hue] > 0 ? log10(histogram[hue]) * (radius - skipRadius) / maxValueLog : 0;
             distanceSquare = (x - centerX) * (x - centerX) + (y - centerY) * (y - centerY);
 
