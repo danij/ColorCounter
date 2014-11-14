@@ -168,7 +168,7 @@ vector<unique_ptr<wxImage>> HistogramPlotter::PlotFrames(Histogram& histogram, s
 
 			for (size_t frame = 0; frame < frameCount; ++frame)
 			{
-				value = linearValue + frame * (logValue - linearValue) / (frameCount - 1);
+				value = linearValue + frame * abs(logValue - linearValue) / (frameCount - 1);
 				for (int y = height - value; y < height; ++y)
 				{
 					alphas[frame][y * width + x] = 255;
