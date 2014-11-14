@@ -197,6 +197,8 @@ void MainWindow::ProcessFile(const wxString& fileName)
 
     DrawHistogram(hueProcessor.GetHueHistogram());
     RefreshSampleValues();
+
+	SetTitle(wxString::Format("Color Counter - %s", fileName));
 }
 
 void MainWindow::DrawHistogram(Histogram& histogram)
