@@ -4,3 +4,5 @@ Release/
 *.*proj
 *.*proj.*
 *.aps
+ColorCounter
+*.dylib
