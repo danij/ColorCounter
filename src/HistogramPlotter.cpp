@@ -297,7 +297,11 @@ void HistogramPlotCache::Insert(const PlotCacheInfo& info, unsigned char* data)
 
 inline float CalculateAngle(int x, int y, int centerX, int centerY)
 {
-    auto result = (float)(atan(abs((float)y - centerY) / abs((float)x - centerX)));
+    auto result = M_PI_2;
+    if (x != centerX)
+    {
+        result = (float)(atan(abs((float)y - centerY) / abs((float)x - centerX)));
+    }
     if (y > centerY && x > centerX)
     {
         result = M_PI + M_PI - result;
