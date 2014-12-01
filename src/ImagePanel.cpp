@@ -17,7 +17,7 @@ ImagePanel::~ImagePanel()
 
 void ImagePanel::OnPaint(wxPaintEvent& event)
 {
-    if (bitmap.GetWidth() < 1)
+    if ( ! bitmap.IsOk() || bitmap.GetWidth() < 1)
     {
         return;
     }
