@@ -208,8 +208,6 @@ void MainWindow::DrawHistogram(Histogram& histogram)
     auto& pieBitmap = histogramBitmaps[pieHistogramIndex][linearHistogramIndex];
     auto& pieLogBitmap = histogramBitmaps[pieHistogramIndex][logHistogramIndex];
 
-    auto bitmapHeight = normalBitmap->GetHeight();
-
     HistogramPlotter plotter(displaySaturation, displayValue, plotCache);
     {
         //normal plots
