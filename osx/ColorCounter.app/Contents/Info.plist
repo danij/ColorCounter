@@ -23,6 +23,6 @@
   <key>IFMinorVersion</key>
   <integer>1</integer>
   <key>NSHighResolutionCapable</key>
-  <boolean>YES</boolean>
+  <string>YES</string>
 </dict>
 </plist>
