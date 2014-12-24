@@ -1,4 +1,5 @@
 #include "HueHistogram.h"
+#include <cstring>
 
 using namespace std;
 
